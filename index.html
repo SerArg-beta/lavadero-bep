@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#4A90E2">
+<title>Lavadero Bep</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#FAFAFA;color:#333;font-size:16px;padding-bottom:80px}
+.container{max-width:480px;margin:0 auto;padding:16px}
+h1{font-size:24px;text-align:center;margin:20px 0;color:#4A90E2}
+h2{font-size:20px;margin:16px 0}
+.saludo{text-align:center;font-size:18px;margin-bottom:24px;color:#666}
+.btn{display:block;width:100%;min-height:54px;border:none;border-radius:12px;font-size:18px;font-weight:bold;cursor:pointer;margin:10px 0}
+.btn-primary{background:#4A90E2;color:#fff}
+.btn-success{background:#28a745;color:#fff}
+.btn-warning{background:#F5A623;color:#fff}
+.btn-danger{background:#D0021B;color:#fff}
+.btn-secondary{background:#E0E0E0;color:#333}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;box-shadow:0 -2px 10px rgba(0,0,0,0.1);display:flex;justify-content:space-around;padding:8px 0}
+.nav-btn{background:none;border:none;font-size:13px;padding:8px;color:#666;cursor:pointer}
+.nav-btn.activo{color:#4A90E2;font-weight:bold}
+.pantalla{display:none}
+.pantalla.activa{display:block}
+.card{background:#fff;border-radius:12px;padding:16px;margin:10px 0;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.card-pendiente{border-left:6px solid #F5A623}
+.card-lavando{border-left:6px solid #4A90E2}
+.card-listo{border-left:6px solid #28a745}
+.card-entregado{border-left:6px solid #155724}
+.card-debe{border-right:6px solid #D0021B}
+input,select,textarea{width:100%;padding:14px;margin:8px 0;border:2px solid #E0E0E0;border-radius:8px;font-size:16px}
+.resumen-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.resumen-card{background:#fff;border-radius:12px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.resumen-valor{font-size:22px;font-weight:bold;margin-top:8px}
+.fila{display:flex;gap:8px;margin-top:10px}
+.fila button{flex:1;font-size:14px;min-height:42px}
+</style>
+</head>
+<body>
+<div class="container">
+<div id="p-inicio" class="pantalla activa">
+<h1>🧺 Lavadero Bep</h1>
+<p class="saludo">¡Bienvenida Blanca a tu app Bep!</p>
+<button class="btn btn-primary" onclick="ir('p-nuevo')">➕ Nuevo Pedido</button>
+<button class="btn btn-secondary" onclick="ir('p-pedidos')">📋 Ver Pedidos</button>
+<button class="btn btn-secondary" onclick="ir('p-caja')">💰 Caja y Gastos</button>
+<button class="btn btn-secondary" onclick="ir('p-clientes')">👤 Clientes</button>
+</div>
+
+<div id="p-nuevo" class="pantalla">
+<h2>➕ Nuevo Pedido</h2>
+<input type="text" id="n-nombre" placeholder="Nombre del cliente">
+<input type="tel" id="n-tel" placeholder="Teléfono">
+<input type="text" id="n-serv" placeholder="Servicio (ej: Lavado y planchado)">
+<input type="number" id="n-precio" placeholder="Precio $">
+<textarea id="n-obs" placeholder="Observaciones" rows="2"></textarea>
+<select id="n-pago">
+<option value="si">✅ Pagado</option>
+<option value="no">❌ Debe</option>
+</select>
+<button class="btn btn-success" onclick="guardarPed()">💾 Guardar Pedido</button>
+<button class="btn btn-secondary" onclick="ir('p-inicio')">⬅️ Volver</button>
+</div>
+
+<div id="p-pedidos" class="pantalla">
+<h2>📋 Pedidos</h2>
+<input type="text" id="buscar" placeholder="🔍 Buscar nombre o teléfono..." oninput="verPedidos()">
+<div id="lista-ped"></div>
+<button class="btn btn-secondary" onclick="ir('p-inicio')">⬅️ Volver</button>
+</div>
+
+<div id="p-caja" class="pantalla">
+<h2>💰 Caja del Día</h2>
+<div class="resumen-grid">
+<div class="resumen-card"><div>Ingresos</div><div class="resumen-valor" style="color:#28a745" id="c-ing">$0</div></div>
+<div class="resumen-card"><div>Gastos</div><div class="resumen-valor" style="color:#D0021B" id="c-gas">$0</div></div>
+</div>
+<div class="resumen-card"><div>Ganancia Neta</div><div class="resumen-valor" style="color:#4A90E2" id="c-net">$0</div></div>
+<h3 style="margin-top:20px">➕ Registrar Gasto</h3>
+<input type="text" id="g-desc" placeholder="Ej: Jabón, suavizante...">
+<input type="number" id="g-monto" placeholder="Monto $">
+<button class="btn btn-warning" onclick="guardarGasto()">💾 Guardar Gasto</button>
+<h3 style="margin-top:20px">⚠️ Deben</h3>
+<div id="lista-deudas"></div>
+<button class="btn btn-secondary" onclick="ir('p-inicio')">⬅️ Volver</button>
+</div>
+
+<div id="p-clientes" class="pantalla">
+<h2>👤 Clientes</h2>
+<div id="lista-cli"></div>
+<button class="btn btn-secondary" onclick="ir('p-inicio')">⬅️ Volver</button>
+</div>
+</div>
+
+<div class="nav">
+<button class="nav-btn activo" id="b-inicio" onclick="ir('p-inicio')">🏠 Inicio</button>
+<button class="nav-btn" id="b-pedidos" onclick="ir('p-pedidos')">📋 Pedidos</button>
+<button class="nav-btn" id="b-caja" onclick="ir('p-caja')">💰 Caja</button>
+<button class="nav-btn" id="b-clientes" onclick="ir('p-clientes')">👤 Clientes</button>
+</div>
+
+<script>
+function getP(){return JSON.parse(localStorage.getItem('bep_p')||'[]')}
+function setP(d){localStorage.setItem('bep_p',JSON.stringify(d))}
+function getG(){return JSON.parse(localStorage.getItem('bep_g')||'[]')}
+function setG(d){localStorage.setItem('bep_g',JSON.stringify(d))}
+
+function ir(id){
+document.querySelectorAll('.pantalla').forEach(x=>x.classList.remove('activa'));
+document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('activo'));
+document.getElementById(id).classList.add('activa');
+const map={'p-inicio':'b-inicio','p-pedidos':'b-pedidos','p-caja':'b-caja','p-clientes':'b-clientes'};
+if(map[id])document.getElementById(map[id]).classList.add('activo');
+if(id==='p-pedidos')verPedidos();
+if(id==='p-caja')verCaja();
+if(id==='p-clientes')verClientes();
+}
+
+function guardarPed(){
+const nom=document.getElementById('n-nombre').value.trim();
+if(!nom){alert('Falta el nombre');return;}
+const p=getP();
+p.unshift({
+id:Date.now(),
+nom:nom,
+tel:document.getElementById('n-tel').value.trim(),
+serv:document.getElementById('n-serv').value.trim()||'Lavado',
+pre:parseFloat(document.getElementById('n-precio').value)||0,
+obs:document.getElementById('n-obs').value.trim(),
+pag:document.getElementById('n-pago').value==='si',
+est:'pendiente',
+fec:new Date().toLocaleDateString('es-AR')
+});
+setP(p);
+document.getElementById('n-nombre').value='';
+document.getElementById('n-tel').value='';
+document.getElementById('n-serv').value='';
+document.getElementById('n-precio').value='';
+document.getElementById('n-obs').value='';
+alert('✅ Guardado');
+ir('p-pedidos');
+}
+
+function estPed(id,e){
+const p=getP();
+const i=p.findIndex(x=>x.id===id);
+if(i>-1){p[i].est=e;setP(p);verPedidos();}
+}
+
+function delPed(id){
+if(!confirm('¿Borrar?'))return;
+setP(getP().filter(x=>x.id!==id));
+verPedidos();
+}
+
+function wsp(id){
+const x=getP().find(i=>i.id===id);
+if(!x)return;
+const t=`Hola ${x.nom}, tu pedido (${x.serv}) está: ${x.est.toUpperCase()}. Total: $${x.pre}. Lavadero Bep`;
+navigator.clipboard.writeText(t).then(()=>alert('✅ Copiado para WhatsApp')).catch(()=>alert(t));
+}
+
+function verPedidos(){
+const q=document.getElementById('buscar').value.toLowerCase();
+const lista=getP().filter(x=>x.nom.toLowerCase().includes(q)||x.tel.includes(q));
+const c=document.getElementById('lista-ped');
+if(!lista.length){c.innerHTML='<p style="text-align:center;color:#888">Sin pedidos</p>';return;}
+c.innerHTML=lista.map(x=>`
+<div class="card card-${x.est} ${!x.pag?'card-debe':''}">
+<b>${x.nom}</b> (${x.est.toUpperCase()})<br>
+📞 ${x.tel||'-'} | 🧺 ${x.serv}<br>
+💰 $${x.pre} ${!x.pag?'<b style="color:red">- DEBE</b>':'✓'}<br>
+<small>${x.fec} ${x.obs?'| '+x.obs:''}</small>
+<div class="fila">
+${x.est==='pendiente'?`<button class="btn btn-primary" onclick="estPed(${x.id},'lavando')">Lavando</button>`:''}
+${x.est==='lavando'?`<button class="btn btn-warning" onclick="estPed(${x.id},'listo')">Listo</button>`:''}
+${x.est==='listo'?`<button class="btn btn-success" onclick="estPed(${x.id},'entregado')">Entregar</button>`:''}
+<button class="btn btn-secondary" onclick="wsp(${x.id})">💬 Wsp</button>
+<button class="btn btn-danger" onclick="delPed(${x.id})">🗑️</button>
+</div></div>`).join('');
+}
+
+function guardarGasto(){
+const d=document.getElementById('g-desc').value.trim();
+const m=parseFloat(document.getElementById('g-monto').value)||0;
+if(!d||m<=0){alert('Completá datos');return;}
+const g=getG();
+g.push({id:Date.now(),d,m,fec:new Date().toLocaleDateString('es-AR')});
+setG(g);
+document.getElementById('g-desc').value='';
+document.getElementById('g-monto').value='';
+alert('✅ Gasto guardado');
+verCaja();
+}
+
+function verCaja(){
+const hoy=new Date().toLocaleDateString('es-AR');
+const p=getP();
+const g=getG();
+const ing=p.filter(x=>x.pag&&x.fec===hoy).reduce((a,b)=>a+b.pre,0);
+const gas=g.filter(x=>x.fec===hoy).reduce((a,b)=>a+b.m,0);
+document.getElementById('c-ing').textContent='$'+ing;
+document.getElementById('c-gas').textContent='$'+gas;
+document.getElementById('c-net').textContent='$'+(ing-gas);
+const deb=p.filter(x=>!x.pag);
+document.getElementById('lista-deudas').innerHTML=deb.length?deb.map(x=>`
+<div class="card card-debe"><b>${x.nom}</b> - $${x.pre}
+<button class="btn btn-success" onclick="pagar(${x.id})">✅ Cobrar ahora</button></div>`).join(''):'<p>Sin deudas</p>';
+}
+
+function pagar(id){
+const p=getP();
+const i=p.findIndex(x=>x.id===id);
+if(i>-1){p[i].pag=true;setP(p);verCaja();}
+}
+
+function verClientes(){
+const p=getP();
+const map={};
+p.forEach(x=>{
+const k=x.nom.toLowerCase();
+if(!map[k])map[k]={nom:x.nom,tel:x.tel,tot:0,vis:0};
+map[k].tot+=x.pre;map[k].vis++;
+});
+const arr=Object.values(map);
+document.getElementById('lista-cli').innerHTML=arr.length?arr.map(c=>`
+<div class="card"><b>${c.nom}</b><br>📞 ${c.tel||'-'}<br>Pedidos: ${c.vis} | Total: $${c.tot}</div>`).join(''):'<p>Sin clientes</p>';
+}
+</script>
+</body>
+</html>
